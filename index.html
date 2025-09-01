@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Image Gallery</title>
+    <style>
+        :root {
+            --card-width: 300px;
+            --card-height: 400px;
+            --carousel-speed: 20s;
+        }
+
+        body {
+            margin: 0;
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            background: #0f0f0f;
+            overflow: hidden;
+        }
+
+        .carousel-container {
+            width: var(--card-width);
+            height: 80vh;
+            position: relative;
+            overflow: hidden;
+            scroll-behavior: smooth;
+            overflow-y: auto; /* Enable vertical scrolling */
+        }
+
+        .track {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: absolute;
+            animation: scroll var(--carousel-speed) linear infinite;
+            width: 100%;
+            padding: 40vh 0; /* Add padding to allow centering */
+        }
+
+        .card {
+            width: var(--card-width);
+            height: var(--card-height);
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.5s ease;
+            overflow: hidden;
+            filter: blur(3px);
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .card.active {
+            filter: blur(0);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .card.active img {
+            transform: scale(1.1);
+        }
+
+        .card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                180deg,
+                rgba(0, 0, 0, 0) 0%,
+                rgba(0, 0, 0, 0.5) 100%
+            );
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card.active::after {
+            opacity: 1;
+        }
+
+        .card .title {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            font-size: 1.5rem;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card.active .title {
+            opacity: 1;
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(calc(-100% / 2));
+            }
+        }
+
+        .card.active .particles {
+            opacity: 1;
+        }
+
+        .particles {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .particle {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 2s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(-20px) translateX(10px);
+                opacity: 0.8;
+            }
+        }
+
+        /* Add styles for centered card */
+        .card.centered {
+            position: relative;
+            transform: scale(1.05);
+            z-index: 100;
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .carousel-container::-webkit-scrollbar {
+            display: none;
+        }
+        .carousel-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Password overlay styles */
+        .password-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .password-container {
+            background: #1a1a1a;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        }
+
+        .password-container h2 {
+            color: white;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .password-input {
+            background: #2a2a2a;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            color: white;
+            font-size: 1.5rem;
+            letter-spacing: 0.5em;
+            text-align: center;
+            width: 150px;
+            margin-bottom: 1rem;
+        }
+
+        .password-input:focus {
+            outline: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .password-button {
+            background: #3a3a3a;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .password-button:hover {
+            background: #4a4a4a;
+        }
+
+        .error-message {
+            color: #ff4444;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        /* Add this to your existing styles */
+        .main-content {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease;
+        }
+
+        .main-content.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-content" id="mainContent">
+        <div class="carousel-container">
+            <div class="track">
+                <!-- Original set -->
+                <div class="card" data-song="/music/Kaatre En Vasal.mp3">
+                    <img src="/images/dp1.jpg" alt="Image 1" style="object-position: center 0%;">
+                    <div class="title">Queen of Hearts</div>
+                    <div class="particles"></div>
+                </div>
+                <div class="card" data-song="/music/kurumugil.mp3">
+                    <img src="/images/dp2.jpg" alt="Image 2">
+                    <div class="title">Love You Always</div>
+                    <div class="particles"></div>
+                </div>
+                <div class="card" data-song="/music/raataan lambiyan.mp3">
+                    <img src="/images/dp3.jpg" alt="Image 3">
+                    <div class="title">My Happiness</div>
+                    <div class="particles"></div>
+                </div>
+                <!-- Cloned set for infinite scroll -->
+                <div class="card" data-song="/music/Kaatre En Vasal.mp3">
+                    <img src="/images/dp1.jpg" alt="Image 1" style="object-position: center 0%;">
+                    <div class="title">Queen of Hearts</div>
+                    <div class="particles"></div>
+                </div>
+                <div class="card" data-song="/music/kurumugil.mp3">
+                    <img src="/images/dp2.jpg" alt="Image 2">
+                    <div class="title">Love You Always</div>
+                    <div class="particles"></div>
+                </div>
+                <div class="card" data-song="/music/raataan lambiyan.mp3">
+                    <img src="/images/dp3.jpg" alt="Image 3">
+                    <div class="title">My Happiness</div>
+                    <div class="particles"></div>
+                </div>
+            </div>
+        </div>
+        <audio id="bgMusic"></audio>
+    </div>
+
+    <!-- Password overlay -->
+    <div class="password-overlay" id="passwordOverlay">
+        <div class="password-container">
+            <h2>Enter Password</h2>
+            <input type="password" 
+                   class="password-input" 
+                   id="passwordInput" 
+                   maxlength="4" 
+                   placeholder="****">
+            <div>
+                <button class="password-button" onclick="checkPassword()">Submit</button>
+            </div>
+            <p class="error-message" id="errorMessage">Incorrect password</p>
+        </div>
+    </div>
+
+    <script>
+        const track = document.querySelector('.track');
+        const cards = document.querySelectorAll('.card');
+        const audio = document.getElementById('bgMusic');
+        let isPlaying = false;
+
+        // Create particles for each card
+        cards.forEach(card => {
+            const particles = card.querySelector('.particles');
+            for(let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.width = Math.random() * 4 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 2 + 's';
+                particles.appendChild(particle);
+            }
+        });
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                // Stop carousel animation
+                track.style.animationPlayState = 'paused';
+                
+                // Remove active class from all cards
+                cards.forEach(c => {
+                    c.classList.remove('active');
+                    c.classList.remove('centered');
+                });
+                
+                // Add active class to clicked card
+                card.classList.add('active');
+                card.classList.add('centered');
+                
+                // Center the card in viewport
+                const cardRect = card.getBoundingClientRect();
+                const containerRect = document.querySelector('.carousel-container').getBoundingClientRect();
+                const scrollOffset = cardRect.top - containerRect.top - (containerRect.height - cardRect.height) / 2;
+                
+                document.querySelector('.carousel-container').scrollBy({
+                    top: scrollOffset,
+                    behavior: 'smooth'
+                });
+                
+                // Play associated song
+                const song = card.dataset.song;
+                audio.src = song;
+                audio.play();
+                isPlaying = true;
+            });
+        });
+
+        // Reset function for when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.card')) {
+                track.style.animationPlayState = 'running';
+                cards.forEach(card => {
+                    card.classList.remove('active');
+                    card.classList.remove('centered');
+                });
+                if (isPlaying) {
+                    audio.pause();
+                    isPlaying = false;
+                }
+            }
+        });
+
+        // Add scroll handling to pause animation when user scrolls
+        let scrollTimeout;
+        const container = document.querySelector('.carousel-container');
+        container.addEventListener('scroll', () => {
+            track.style.animationPlayState = 'paused';
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                if (!document.querySelector('.card.active')) {
+                    track.style.animationPlayState = 'running';
+                }
+            }, 150);
+        });
+
+        // Password protection
+        const correctPassword = "0908";
+        const passwordOverlay = document.getElementById('passwordOverlay');
+        const passwordInput = document.getElementById('passwordInput');
+        const errorMessage = document.getElementById('errorMessage');
+        const mainContent = document.getElementById('mainContent');
+        
+        // Check if already authenticated
+        if (!sessionStorage.getItem('authenticated')) {
+            passwordOverlay.style.display = 'flex';
+            mainContent.classList.remove('visible');
+        } else {
+            passwordOverlay.style.display = 'none';
+            mainContent.classList.add('visible');
+        }
+
+        function checkPassword() {
+            if (passwordInput.value === correctPassword) {
+                passwordOverlay.style.display = 'none';
+                sessionStorage.setItem('authenticated', 'true');
+                errorMessage.style.display = 'none';
+                // Show main content
+                document.getElementById('mainContent').classList.add('visible');
+            } else {
+                errorMessage.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+
+        // Allow Enter key to submit
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+    </script>
+</body>
+</html>
